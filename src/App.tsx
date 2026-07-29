@@ -16,7 +16,7 @@ import { sendTelegramNotification } from './utils/telegramNotify';
 import { ShieldCheck, Calendar, Info, RefreshCw, Users, Clock, AlertTriangle } from 'lucide-react';
 
 export default function App() {
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 7, 1));
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [selectedDept, setSelectedDept] = useState<Department | 'ALL'>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');

@@ -83,7 +83,7 @@ export const LineExportModal: React.FC<LineExportModalProps> = ({
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
       const dStr = formatDateKey(d);
-      const dDayName = THAI_DAYS_SHORT[d.getDay() === 0 ? 6 : d.getDay() - 1];
+      const dDayName = THAI_DAYS_SHORT[d.getDay()];
 
       lineText += `\n🗓️ *${d.getDate()}/${d.getMonth() + 1} (${dDayName})*\n`;
 

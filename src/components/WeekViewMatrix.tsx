@@ -70,7 +70,7 @@ export const WeekViewMatrix: React.FC<WeekViewMatrixProps> = ({
               {weekDays.map((d) => {
                 const dateStr = formatDateKey(d);
                 const isToday = dateStr === todayStr;
-                const dayName = THAI_DAYS_SHORT[d.getDay() === 0 ? 6 : d.getDay() - 1];
+                const dayName = THAI_DAYS_SHORT[d.getDay()];
 
                 return (
                   <th

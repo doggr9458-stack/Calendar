@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Staff, ShiftAssignment, Department } from '../types';
 import { SHIFT_DICTIONARY } from '../data/staff';
-import { THAI_DAYS_SHORT, THAI_DAYS_FULL, formatDateKey } from '../utils/scheduleCalculator';
+import { THAI_DAYS_SHORT, THAI_DAYS_FULL, THAI_MONTHS, formatDateKey } from '../utils/scheduleCalculator';
 import { User, Lock, Edit3, Calendar, AlertCircle, Smartphone, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface MonthViewProps {
@@ -30,8 +30,18 @@ export const MonthView: React.FC<MonthViewProps> = ({
     if (today.getMonth() === currentDate.getMonth() && today.getFullYear() === currentDate.getFullYear()) {
       return today.getDate();
     }
-    return 1;
+    return currentDate.getDate() || 1;
   });
+
+  // Keep selectedMobileDate synchronized whenever currentDate (month/year/day) changes
+  useEffect(() => {
+    const today = new Date();
+    if (today.getMonth() === currentDate.getMonth() && today.getFullYear() === currentDate.getFullYear()) {
+      setSelectedMobileDate(today.getDate());
+    } else {
+      setSelectedMobileDate(currentDate.getDate() || 1);
+    }
+  }, [currentDate]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -114,8 +124,8 @@ export const MonthView: React.FC<MonthViewProps> = ({
           <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-700">เลือกวันที่ต้องการดู:</span>
-              <span className="text-[11px] text-blue-600 font-semibold">
-                {THAI_DAYS_FULL[activeMobileDate.getDay()]} {activeMobileDate.getDate()} {activeMobileDate.toLocaleString('th-TH', { month: 'short' })}
+              <span className="text-[11px] text-blue-600 font-bold">
+                {THAI_DAYS_FULL[activeMobileDate.getDay()]}ที่ {activeMobileDate.getDate()} {THAI_MONTHS[activeMobileDate.getMonth()]} {activeMobileDate.getFullYear() + 543}
               </span>
             </div>
 
@@ -125,7 +135,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
                 const dKey = formatDateKey(dObj);
                 const isSelected = dNum === activeMobileDate.getDate();
                 const isTodayDate = dKey === todayStr;
-                const dDayShort = THAI_DAYS_SHORT[dObj.getDay() === 0 ? 6 : dObj.getDay() - 1];
+                const dDayShort = THAI_DAYS_SHORT[dObj.getDay()];
 
                 return (
                   <button

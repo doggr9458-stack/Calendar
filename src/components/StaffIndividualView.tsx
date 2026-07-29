@@ -74,7 +74,7 @@ export const StaffIndividualView: React.FC<StaffIndividualViewProps> = ({
 
     monthlyAssignments.forEach(({ date, assignment }) => {
       const dayNum = date.getDate();
-      const dayName = THAI_DAYS_SHORT[date.getDay() === 0 ? 6 : date.getDay() - 1];
+      const dayName = THAI_DAYS_SHORT[date.getDay()];
       if (assignment.isOff) {
         text += `${dayNum} (${dayName}): 🔴 หยุด\n`;
       } else {
@@ -186,7 +186,7 @@ export const StaffIndividualView: React.FC<StaffIndividualViewProps> = ({
             const shiftInfo = SHIFT_DICTIONARY[assignment.shiftType];
             const isOff = assignment.isOff;
             const dayNum = date.getDate();
-            const dayName = THAI_DAYS_SHORT[date.getDay() === 0 ? 6 : date.getDay() - 1];
+            const dayName = THAI_DAYS_SHORT[date.getDay()];
 
             return (
               <div
