@@ -1,4 +1,4 @@
-import { Staff, ShiftAssignment, ShiftType } from '../types';
+import { Staff, ShiftAssignment, ShiftType, Department } from '../types';
 import { INITIAL_STAFF } from '../data/staff';
 
 /**

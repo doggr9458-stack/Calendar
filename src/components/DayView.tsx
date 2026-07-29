@@ -66,6 +66,7 @@ export const DayView: React.FC<DayViewProps> = ({
 
   return (
     <div className="space-y-6">
+
       {/* Date Title Banner */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

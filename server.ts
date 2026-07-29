@@ -1,13 +1,37 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const OVERRIDES_FILE = path.join(process.cwd(), 'schedule_overrides.json');
+
+function loadOverrides(): Record<string, any> {
+  try {
+    if (fs.existsSync(OVERRIDES_FILE)) {
+      const data = fs.readFileSync(OVERRIDES_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (e) {
+    console.error('Error reading schedule_overrides.json:', e);
+  }
+  return {};
+}
+
+function saveOverrides(data: Record<string, any>) {
+  try {
+    fs.writeFileSync(OVERRIDES_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Error writing schedule_overrides.json:', e);
+  }
+}
+
+let currentOverrides = loadOverrides();
 
 async function startServer() {
   const app = express();
@@ -20,41 +44,33 @@ async function startServer() {
     res.json({ status: 'ok', time: new Date().toISOString() });
   });
 
-  // AI Assistant endpoint for schedule queries or LINE announcements
-  app.post('/api/ai-assistant', async (req, res) => {
-    try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        return res.status(400).json({
-          error: 'GEMINI_API_KEY ยังไม่ได้กำหนดใน Secrets/Environment',
-        });
-      }
+  // Schedule Overrides Persistence API for cross-user sync
+  app.get('/api/schedule', (req, res) => {
+    res.json({ overrides: currentOverrides });
+  });
 
-      const { prompt, contextData, mode } = req.body;
-
-      const ai = new GoogleGenAI({ apiKey });
-
-      let systemInstruction = `คุณคือผู้ช่วยจัดการตารางกะงานพนักงานของร้านค้า (BSM, PIA, MSC) 
-ตอบเป็นภาษาไทยอย่างสุภาพ กระชับ ถูกต้องตามข้อมูลตารางงานที่ส่งให้`;
-
-      if (mode === 'line_draft') {
-        systemInstruction += `\nหน้าที่ของคุณคือร่างข้อความสรุปตารางกะสำหรับส่งในกลุ่ม LINE พนักงาน ใช้ emoji ตกแต่งให้อ่านง่าย เป็นระเบียบ ชัดเจน`;
-      } else if (mode === 'swap_draft') {
-        systemInstruction += `\nหน้าที่ของคุณคือเขียนข้อความขอสลับกะหรือแจ้งเปลี่ยนกะอย่างเป็นทางการสำหรับสื่อสารภายในทีม`;
-      }
-
-      const fullPrompt = `${systemInstruction}\n\nข้อมูลบริบทตารางงาน:\n${JSON.stringify(contextData, null, 2)}\n\nคำขอของผู้ใช้: ${prompt}`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: fullPrompt,
-      });
-
-      res.json({ text: response.text });
-    } catch (err: any) {
-      console.error('AI Assistant Error:', err);
-      res.status(500).json({ error: err.message || 'เกิดข้อผิดพลาดในการประมวลผล AI' });
+  app.post('/api/schedule', (req, res) => {
+    const { overrides, updatedAssignment, resetAssignmentId } = req.body;
+    if (overrides !== undefined) {
+      currentOverrides = overrides;
+    } else if (updatedAssignment) {
+      currentOverrides = {
+        ...currentOverrides,
+        [updatedAssignment.id]: updatedAssignment,
+      };
+    } else if (resetAssignmentId) {
+      const copy = { ...currentOverrides };
+      delete copy[resetAssignmentId];
+      currentOverrides = copy;
     }
+    saveOverrides(currentOverrides);
+    res.json({ success: true, overrides: currentOverrides });
+  });
+
+  app.post('/api/schedule/reset', (req, res) => {
+    currentOverrides = {};
+    saveOverrides(currentOverrides);
+    res.json({ success: true, overrides: {} });
   });
 
   // Vite development middleware or static production serving

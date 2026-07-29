@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Staff, ShiftAssignment, CalendarViewMode, Department } from './types';
 import { INITIAL_STAFF } from './data/staff';
 import { generateMonthlySchedule, THAI_MONTHS, THAI_DAYS_FULL } from './utils/scheduleCalculator';
@@ -11,7 +11,6 @@ import { AdminLockModal } from './components/AdminLockModal';
 import { ShiftEditModal } from './components/ShiftEditModal';
 import { LineExportModal } from './components/LineExportModal';
 import { TelegramModal } from './components/TelegramModal';
-import { AiAssistantDrawer } from './components/AiAssistantDrawer';
 import { sendTelegramNotification } from './utils/telegramNotify';
 import { ShieldCheck, Calendar, Info, RefreshCw, Users, Clock, AlertTriangle } from 'lucide-react';
 
@@ -25,7 +24,7 @@ export default function App() {
   const [loggedInStaff, setLoggedInStaff] = useState<Staff | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
-  // Custom Overrides State (Saved in LocalStorage)
+  // Custom Overrides State
   const [overrides, setOverrides] = useState<Record<string, ShiftAssignment>>(() => {
     const saved = localStorage.getItem('bsm_schedule_overrides');
     if (saved) {
@@ -42,7 +41,6 @@ export default function App() {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isLineModalOpen, setIsLineModalOpen] = useState(false);
   const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
-  const [isAiDrawerOpen, setIsAiDrawerOpen] = useState(false);
 
   // Shift Edit Modal State
   const [selectedShiftForEdit, setSelectedShiftForEdit] = useState<{
@@ -50,7 +48,30 @@ export default function App() {
     staff: Staff;
   } | null>(null);
 
-  // Save overrides to LocalStorage
+  // Fetch overrides from backend server for global synchronization
+  const fetchRemoteSchedule = useCallback(async () => {
+    try {
+      const res = await fetch('/api/schedule');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.overrides) {
+          setOverrides(data.overrides);
+          localStorage.setItem('bsm_schedule_overrides', JSON.stringify(data.overrides));
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to sync with schedule server:', err);
+    }
+  }, []);
+
+  // Poll for remote schedule changes so all viewers see updates in real-time
+  useEffect(() => {
+    fetchRemoteSchedule();
+    const interval = setInterval(fetchRemoteSchedule, 3000);
+    return () => clearInterval(interval);
+  }, [fetchRemoteSchedule]);
+
+  // Save overrides locally
   useEffect(() => {
     localStorage.setItem('bsm_schedule_overrides', JSON.stringify(overrides));
   }, [overrides]);
@@ -70,11 +91,24 @@ export default function App() {
     }
   };
 
-  const handleSaveShiftAssignment = (updated: ShiftAssignment) => {
-    setOverrides((prev) => ({
-      ...prev,
+  const handleSaveShiftAssignment = async (updated: ShiftAssignment) => {
+    const nextOverrides = {
+      ...overrides,
       [updated.id]: updated,
-    }));
+    };
+    setOverrides(nextOverrides);
+    localStorage.setItem('bsm_schedule_overrides', JSON.stringify(nextOverrides));
+
+    // Save to shared server endpoint for cross-user synchronization
+    try {
+      await fetch('/api/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updatedAssignment: updated }),
+      });
+    } catch (e) {
+      console.error('Failed to post updated shift assignment:', e);
+    }
 
     // Send Telegram Notification
     if (selectedShiftForEdit) {
@@ -101,12 +135,21 @@ export default function App() {
     }
   };
 
-  const handleResetShiftToAuto = (assignmentId: string) => {
-    setOverrides((prev) => {
-      const copy = { ...prev };
-      delete copy[assignmentId];
-      return copy;
-    });
+  const handleResetShiftToAuto = async (assignmentId: string) => {
+    const copy = { ...overrides };
+    delete copy[assignmentId];
+    setOverrides(copy);
+    localStorage.setItem('bsm_schedule_overrides', JSON.stringify(copy));
+
+    try {
+      await fetch('/api/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resetAssignmentId: assignmentId }),
+      });
+    } catch (e) {
+      console.error('Failed to post reset shift assignment:', e);
+    }
 
     if (selectedShiftForEdit) {
       const { staff, assignment } = selectedShiftForEdit;
@@ -124,10 +167,16 @@ export default function App() {
     }
   };
 
-  const handleResetEntireSchedule = () => {
+  const handleResetEntireSchedule = async () => {
     if (window.confirm('คุณต้องการรีเซ็ตตารางกะงานทั้งหมดกลับเป็นกฎเริ่มต้นใช่หรือไม่?')) {
       setOverrides({});
       localStorage.removeItem('bsm_schedule_overrides');
+
+      try {
+        await fetch('/api/schedule/reset', { method: 'POST' });
+      } catch (e) {
+        console.error('Failed to reset schedule on server:', e);
+      }
 
       const msg =
         `<b>⚠️ คืนค่าตารางงานหลักทั้งหมด</b>\n\n` +
@@ -154,9 +203,9 @@ export default function App() {
           setIsAdmin(false);
         }}
         onOpenLineModal={() => setIsLineModalOpen(true)}
-        onOpenAiDrawer={() => setIsAiDrawerOpen(true)}
         onOpenTelegramModal={() => setIsTelegramModalOpen(true)}
         onResetSchedule={handleResetEntireSchedule}
+        onRefreshData={fetchRemoteSchedule}
         selectedDept={selectedDept}
         setSelectedDept={setSelectedDept}
         searchTerm={searchTerm}
@@ -281,14 +330,6 @@ export default function App() {
       <TelegramModal
         isOpen={isTelegramModalOpen}
         onClose={() => setIsTelegramModalOpen(false)}
-      />
-
-      <AiAssistantDrawer
-        isOpen={isAiDrawerOpen}
-        onClose={() => setIsAiDrawerOpen(false)}
-        currentDate={currentDate}
-        staffList={INITIAL_STAFF}
-        schedule={schedule}
       />
     </div>
   );
