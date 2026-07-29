@@ -2,7 +2,7 @@ import React from 'react';
 import { Staff, ShiftAssignment, Department, ShiftType } from '../types';
 import { SHIFT_DICTIONARY } from '../data/staff';
 import { THAI_DAYS_FULL, THAI_MONTHS, formatDateKey } from '../utils/scheduleCalculator';
-import { Sun, Sunset, Moon, Clock, ShieldAlert, Edit3, UserCheck, Coffee } from 'lucide-react';
+import { Sun, Sunset, Moon, Clock, ShieldAlert, Edit3, UserCheck, Coffee, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DayViewProps {
   currentDate: Date;
@@ -11,6 +11,7 @@ interface DayViewProps {
   isAdmin: boolean;
   onSelectShift: (assignment: ShiftAssignment, staff: Staff) => void;
   selectedDept: Department | 'ALL';
+  onNavigateDay?: (date: Date) => void;
 }
 
 export const DayView: React.FC<DayViewProps> = ({
@@ -20,6 +21,7 @@ export const DayView: React.FC<DayViewProps> = ({
   isAdmin,
   onSelectShift,
   selectedDept,
+  onNavigateDay,
 }) => {
   const dateStr = formatDateKey(currentDate);
   const dayName = THAI_DAYS_FULL[currentDate.getDay()];
@@ -70,9 +72,39 @@ export const DayView: React.FC<DayViewProps> = ({
       {/* Date Title Banner */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium mb-2">
-            ภาพรวมกะงานประจำวัน
-          </span>
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">
+              ภาพรวมกะงานประจำวัน
+            </span>
+            {onNavigateDay && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    const prev = new Date(currentDate);
+                    prev.setDate(prev.getDate() - 1);
+                    onNavigateDay(prev);
+                  }}
+                  className="px-2.5 py-0.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                  title="วันก่อนหน้า"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>วันก่อนหน้า</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const next = new Date(currentDate);
+                    next.setDate(next.getDate() + 1);
+                    onNavigateDay(next);
+                  }}
+                  className="px-2.5 py-0.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                  title="วันถัดไป (สามารถเลื่อนดูจนถึงสิ้นเดือนได้)"
+                >
+                  <span>วันถัดไป</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
           <h2 className="text-2xl font-black">
             {dayName}ที่ {dateNum} {monthName} {thaiYear}
           </h2>

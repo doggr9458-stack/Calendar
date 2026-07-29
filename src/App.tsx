@@ -264,6 +264,7 @@ export default function App() {
             onSelectShift={handleSelectShift}
             selectedDept={selectedDept}
             searchTerm={searchTerm}
+            onNavigateWeek={setCurrentDate}
           />
         )}
 
@@ -275,6 +276,7 @@ export default function App() {
             isAdmin={isAdmin}
             onSelectShift={handleSelectShift}
             selectedDept={selectedDept}
+            onNavigateDay={setCurrentDate}
           />
         )}
 

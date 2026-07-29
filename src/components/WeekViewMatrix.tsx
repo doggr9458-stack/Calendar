@@ -2,7 +2,7 @@ import React from 'react';
 import { Staff, ShiftAssignment, Department } from '../types';
 import { SHIFT_DICTIONARY } from '../data/staff';
 import { THAI_DAYS_FULL, THAI_DAYS_SHORT, formatDateKey } from '../utils/scheduleCalculator';
-import { User, Lock, Edit3, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { User, Lock, Edit3, ShieldAlert, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface WeekViewMatrixProps {
   currentDate: Date;
@@ -12,6 +12,7 @@ interface WeekViewMatrixProps {
   onSelectShift: (assignment: ShiftAssignment, staff: Staff) => void;
   selectedDept: Department | 'ALL';
   searchTerm: string;
+  onNavigateWeek?: (date: Date) => void;
 }
 
 export const WeekViewMatrix: React.FC<WeekViewMatrixProps> = ({
@@ -22,6 +23,7 @@ export const WeekViewMatrix: React.FC<WeekViewMatrixProps> = ({
   onSelectShift,
   selectedDept,
   searchTerm,
+  onNavigateWeek,
 }) => {
   // Get start of the week (Monday) for currentDate
   const curr = new Date(currentDate);
@@ -53,10 +55,41 @@ export const WeekViewMatrix: React.FC<WeekViewMatrixProps> = ({
 
   return (
     <div className="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden space-y-2">
-      {/* Scroll indicator for mobile */}
-      <div className="md:hidden px-3 py-1.5 bg-blue-50 border-b border-blue-100 text-[11px] text-blue-700 font-semibold flex items-center justify-between">
-        <span>👈 เลื่อนตารางซ้าย-ขวาเพื่อดูวันพฤหัสบดี-อาทิตย์ 👉</span>
-        <span className="font-mono bg-blue-200/80 px-1.5 py-0.5 rounded text-[10px]">7 วัน</span>
+      {/* Scroll indicator & week navigation bar */}
+      <div className="px-3 py-2 bg-blue-50 border-b border-blue-100 text-xs text-blue-800 font-semibold flex flex-wrap items-center justify-between gap-2">
+        <span className="flex items-center gap-1 font-bold">
+          👈 เลื่อนตารางซ้าย-ขวาเพื่อดูวัน 👉
+        </span>
+
+        {onNavigateWeek && (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                const prev = new Date(currentDate);
+                prev.setDate(prev.getDate() - 7);
+                onNavigateWeek(prev);
+              }}
+              className="px-2.5 py-1 bg-white hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-2xs"
+              title="สัปดาห์ก่อนหน้า"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>สัปดาห์ก่อนหน้า</span>
+            </button>
+
+            <button
+              onClick={() => {
+                const next = new Date(currentDate);
+                next.setDate(next.getDate() + 7);
+                onNavigateWeek(next);
+              }}
+              className="px-2.5 py-1 bg-white hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-2xs"
+              title="สัปดาห์ถัดไป (สามารถเลื่อนดูจนถึงสิ้นเดือนได้)"
+            >
+              <span>สัปดาห์ถัดไป</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto scrollbar-thin">
