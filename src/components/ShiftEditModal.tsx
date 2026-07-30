@@ -21,21 +21,23 @@ export const ShiftEditModal: React.FC<ShiftEditModalProps> = ({
   onSave,
   onResetToAuto,
 }) => {
-  if (!isOpen || !assignment || !staff) return null;
-
-  const [selectedShiftType, setSelectedShiftType] = useState<ShiftType>(assignment.shiftType);
-  const [startTime, setStartTime] = useState(assignment.startTime || '10:00');
-  const [endTime, setEndTime] = useState(assignment.endTime || '19:00');
-  const [isOff, setIsOff] = useState(assignment.isOff);
-  const [note, setNote] = useState(assignment.note || '');
+  const [selectedShiftType, setSelectedShiftType] = useState<ShiftType>(assignment?.shiftType || 'MORNING');
+  const [startTime, setStartTime] = useState(assignment?.startTime || '10:00');
+  const [endTime, setEndTime] = useState(assignment?.endTime || '19:00');
+  const [isOff, setIsOff] = useState(assignment?.isOff || false);
+  const [note, setNote] = useState(assignment?.note || '');
 
   useEffect(() => {
-    setSelectedShiftType(assignment.shiftType);
-    setStartTime(assignment.startTime || '10:00');
-    setEndTime(assignment.endTime || '19:00');
-    setIsOff(assignment.isOff);
-    setNote(assignment.note || '');
+    if (assignment) {
+      setSelectedShiftType(assignment.shiftType);
+      setStartTime(assignment.startTime || '10:00');
+      setEndTime(assignment.endTime || '19:00');
+      setIsOff(assignment.isOff);
+      setNote(assignment.note || '');
+    }
   }, [assignment]);
+
+  if (!isOpen || !assignment || !staff) return null;
 
   const handleSelectType = (type: ShiftType) => {
     setSelectedShiftType(type);

@@ -8,15 +8,17 @@ interface TelegramModalProps {
 }
 
 export const TelegramModal: React.FC<TelegramModalProps> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-
   const [config, setConfig] = useState<TelegramConfig>({ botToken: '', chatId: '', enabled: false });
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
-    setConfig(getTelegramConfig());
+    if (isOpen) {
+      setConfig(getTelegramConfig());
+    }
   }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();

@@ -223,9 +223,6 @@ export const MonthView: React.FC<MonthViewProps> = ({
                           <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-mono font-bold ${shiftInfo.bgLight} ${shiftInfo.textColor} border border-slate-200/80`}>
                             {assignment.startTime} - {assignment.endTime}
                           </span>
-                          {assignment.isCustomOverride && (
-                            <div className="text-[10px] text-amber-600 font-bold mt-0.5">ปรับแต่งเอง</div>
-                          )}
                         </div>
                       </div>
                     );
@@ -365,11 +362,6 @@ export const MonthView: React.FC<MonthViewProps> = ({
                               }`}
                             />
                             <span className="font-bold truncate text-slate-800">{staff.name}</span>
-                            {assignment.isCustomOverride && (
-                              <span className="text-[9px] bg-amber-200 text-amber-900 px-1 rounded font-bold">
-                                ปรับ
-                              </span>
-                            )}
                           </div>
 
                           <div className="text-[10px] font-mono shrink-0 font-semibold">
