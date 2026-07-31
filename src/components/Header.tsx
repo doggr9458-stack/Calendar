@@ -24,9 +24,7 @@ interface HeaderProps {
   viewMode: CalendarViewMode;
   setViewMode: (mode: CalendarViewMode) => void;
   isAdmin: boolean;
-  loggedInStaff: Staff | null;
-  onOpenAdminModal: () => void;
-  onLogoutAdmin: () => void;
+  onToggleEditMode: () => void;
   onOpenLineModal: () => void;
   onOpenTelegramModal: () => void;
   onResetSchedule: () => void;
@@ -35,6 +33,8 @@ interface HeaderProps {
   setSelectedDept: (dept: Department | 'ALL') => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  logoClicks: number;
+  onLogoClick: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,9 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   viewMode,
   setViewMode,
   isAdmin,
-  loggedInStaff,
-  onOpenAdminModal,
-  onLogoutAdmin,
+  onToggleEditMode,
   onOpenLineModal,
   onOpenTelegramModal,
   onResetSchedule,
@@ -54,6 +52,8 @@ export const Header: React.FC<HeaderProps> = ({
   setSelectedDept,
   searchTerm,
   setSearchTerm,
+  logoClicks,
+  onLogoClick,
 }) => {
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
@@ -85,50 +85,35 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-2xs">
       {/* Top Banner Notice */}
-      <div className={`px-3 py-0.5 text-[11px] font-medium text-center flex flex-wrap items-center justify-center gap-2 transition-colors ${
+      <div className={`px-3 py-1 text-[11px] font-medium text-center flex flex-wrap items-center justify-center gap-2 transition-colors ${
         isAdmin
-          ? 'bg-amber-500 text-white'
-          : loggedInStaff
-          ? 'bg-blue-600 text-white'
+          ? 'bg-amber-500 text-white font-bold'
           : 'bg-slate-800 text-white'
       }`}>
-        {loggedInStaff ? (
+        {isAdmin ? (
           <>
-            {isAdmin ? (
-              <Unlock className="w-3 h-3 animate-pulse" />
-            ) : (
-              <Lock className="w-3 h-3" />
-            )}
+            <Unlock className="w-3.5 h-3.5 animate-pulse text-yellow-200" />
             <span>
-              ผู้ใช้งาน: <strong>{loggedInStaff.name}</strong> (ID: <span className="font-mono">{loggedInStaff.employeeId}</span>) — {isAdmin ? 'สิทธิ์แก้ไขตารางกะ (Admin)' : 'ดูได้อย่างเดียว'}
+              🔓 <strong>โหมดแก้ไขเปิดอยู่</strong> — สามารถกดเลือกกะงานเพื่อแก้ไขได้ทันที (ข้อมูลจะอัปเดตให้ทุกคนเห็นเหมือนกันหมด)
             </span>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={onLogoutAdmin}
-                className="underline hover:no-underline font-semibold bg-black/20 hover:bg-black/30 px-1.5 py-0.5 rounded text-white text-[10px]"
-              >
-                ออกจากระบบ
-              </button>
-              {!isAdmin && (
-                <button
-                  onClick={onOpenAdminModal}
-                  className="underline hover:no-underline font-semibold bg-white/20 hover:bg-white/30 px-1.5 py-0.5 rounded text-white text-[10px]"
-                >
-                  สลับผู้ใช้
-                </button>
-              )}
-            </div>
+            <button
+              onClick={onToggleEditMode}
+              className="ml-2 font-bold bg-black/20 hover:bg-black/40 px-2 py-0.5 rounded text-white text-[10px] transition-colors border border-white/20"
+            >
+              🔒 ปิดโหมดแก้ไข
+            </button>
           </>
         ) : (
           <>
-            <Lock className="w-3 h-3" />
-            <span className="text-[11px]">โหมดผู้เยี่ยมชม — ยืนยันตัวตนด้วย ID พนักงานเพื่อแก้ไข</span>
-            <button
-              onClick={onOpenAdminModal}
-              className="underline hover:no-underline font-semibold bg-white/20 hover:bg-white/30 px-1.5 py-0.5 rounded text-white text-[10px]"
-            >
-              ยืนยันตัวตน (ID พนักงาน)
-            </button>
+            <Lock className="w-3.5 h-3.5 text-slate-300" />
+            <span>
+              👀 <strong>โหมดดูตารางงาน</strong> — ตารางเชื่อมโยงเรียลไทม์เห็นเหมือนกันทุกคน
+            </span>
+            {logoClicks > 0 && (
+              <span className="bg-amber-400 text-slate-900 font-extrabold px-1.5 py-0.2 rounded text-[10px] animate-bounce">
+                กดอีก {10 - logoClicks} ครั้ง
+              </span>
+            )}
           </>
         )}
       </div>
@@ -136,15 +121,26 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Main Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1.5 sm:py-2">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-1.5 sm:gap-2">
-          {/* App Title & Date Navigation */}
+          {/* App Title & Secret Logo Trigger */}
           <div className="flex items-center justify-between sm:justify-start gap-2">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-blue-600 text-white rounded-lg shadow-2xs shrink-0">
-                <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div
+              onClick={onLogoClick}
+              className="flex items-center gap-2 cursor-pointer select-none group p-1 -m-1 rounded-xl hover:bg-slate-100 transition-all active:scale-95"
+              title="กดที่นี่ 10 ครั้งเพื่อเปิด/ปิดโหมดแก้ไขตารางงาน"
+            >
+              <div className={`p-1.5 rounded-lg shadow-2xs shrink-0 transition-all ${
+                isAdmin ? 'bg-amber-500 text-slate-900 ring-2 ring-amber-400' : 'bg-blue-600 text-white group-hover:bg-blue-700'
+              }`}>
+                <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight leading-none">
-                  ตารางงานกะพนักงาน BSM • PIA • MSC
+                <h1 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight leading-none flex items-center gap-1.5">
+                  <span>ตารางงานกะพนักงาน BSM • PIA • MSC</span>
+                  {logoClicks > 0 && (
+                    <span className="px-1.5 py-0.5 bg-amber-500 text-slate-900 font-black text-[10px] rounded-full animate-pulse">
+                      {logoClicks}/10
+                    </span>
+                  )}
                 </h1>
                 <p className="text-[10px] text-slate-500 hidden sm:block mt-0.5">
                   คำนวณวันหยุด กะวน 3 วัน และกะ BSM สลับสัปดาห์อัตโนมัติ
@@ -194,48 +190,24 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
-            {/* Quick Action Buttons (Only visible to Admin ID 16286 / 2609) */}
+            {/* Quick Action Buttons */}
             <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
-              {isAdmin && (
-                <>
-                  <button
-                    onClick={onOpenLineModal}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-2xs transition-all active:scale-95"
-                  >
-                    <Share2 className="w-3.5 h-3.5" />
-                    <span>ส่ง LINE</span>
-                  </button>
+              <button
+                onClick={onOpenLineModal}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-2xs transition-all active:scale-95"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>ส่ง LINE</span>
+              </button>
 
-                  <button
-                    onClick={onOpenTelegramModal}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-2.5 py-1 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold shadow-2xs transition-all active:scale-95"
-                    title="ตั้งค่าแจ้งเตือน Telegram"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Telegram</span>
-                  </button>
-                </>
-              )}
-
-              {!loggedInStaff ? (
-                <button
-                  onClick={onOpenAdminModal}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-2xs transition-all shrink-0"
-                >
-                  <Lock className="w-3 h-3" />
-                  <span className="hidden sm:inline">ยืนยันตัวตน (ID)</span>
-                  <span className="sm:hidden">ยืนยันตัวตน</span>
-                </button>
-              ) : (
-                <button
-                  onClick={onLogoutAdmin}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow-2xs transition-all shrink-0"
-                >
-                  <Unlock className="w-3 h-3" />
-                  <span className="hidden sm:inline">ออกจากระบบ ({loggedInStaff.name})</span>
-                  <span className="sm:hidden">ออก</span>
-                </button>
-              )}
+              <button
+                onClick={onOpenTelegramModal}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-2.5 py-1 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold shadow-2xs transition-all active:scale-95"
+                title="ตั้งค่าแจ้งเตือน Telegram"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Telegram</span>
+              </button>
             </div>
           </div>
         </div>

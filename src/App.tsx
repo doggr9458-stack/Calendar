@@ -7,7 +7,6 @@ import { MonthView } from './components/MonthView';
 import { WeekViewMatrix } from './components/WeekViewMatrix';
 import { DayView } from './components/DayView';
 import { StaffIndividualView } from './components/StaffIndividualView';
-import { AdminLockModal } from './components/AdminLockModal';
 import { ShiftEditModal } from './components/ShiftEditModal';
 import { LineExportModal } from './components/LineExportModal';
 import { TelegramModal } from './components/TelegramModal';
@@ -20,31 +19,48 @@ export default function App() {
   const [selectedDept, setSelectedDept] = useState<Department | 'ALL'>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
-  // User Authentication State
-  const [loggedInStaff, setLoggedInStaff] = useState<Staff | null>(() => {
-    const saved = localStorage.getItem('bsm_logged_in_staff');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse logged in staff:', e);
-      }
-    }
-    return null;
+  // Edit Mode State (Unlocked by clicking App Logo 10 times)
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return localStorage.getItem('bsm_edit_mode_unlocked') === 'true';
   });
 
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
-    const saved = localStorage.getItem('bsm_logged_in_staff');
-    if (saved) {
-      try {
-        const staff = JSON.parse(saved);
-        return staff.employeeId === '16286' || staff.employeeId === '2609';
-      } catch (e) {
-        console.error('Failed to parse admin status:', e);
+  // Secret Logo Click Counter
+  const [logoClicks, setLogoClicks] = useState<number>(0);
+  const clickResetTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleLogoClick = () => {
+    setLogoClicks((prev) => {
+      const next = prev + 1;
+      if (clickResetTimerRef.current) {
+        clearTimeout(clickResetTimerRef.current);
       }
-    }
-    return false;
-  });
+
+      if (next >= 10) {
+        const nextEditState = !isAdmin;
+        setIsAdmin(nextEditState);
+        localStorage.setItem('bsm_edit_mode_unlocked', String(nextEditState));
+        if (nextEditState) {
+          alert('🔓 ปลดล็อกโหมดแก้ไขตารางงานสำเร็จ!\n\nคุณสามารถกดเลือกกะงานของพนักงานท่านใดเพื่อแก้ไขได้ทันที ข้อมูลที่เปลี่ยนจะซิงค์ให้ทุกคนเห็นตรงกันเหมือนกันหมด');
+        } else {
+          alert('🔒 ปิดโหมดแก้ไขตารางงานแล้ว');
+        }
+        return 0;
+      }
+
+      // Auto reset clicks after 4 seconds of inactivity
+      clickResetTimerRef.current = setTimeout(() => {
+        setLogoClicks(0);
+      }, 4000);
+
+      return next;
+    });
+  };
+
+  const handleToggleEditMode = () => {
+    const nextEditState = !isAdmin;
+    setIsAdmin(nextEditState);
+    localStorage.setItem('bsm_edit_mode_unlocked', String(nextEditState));
+  };
 
   // Custom Overrides State
   const [overrides, setOverrides] = useState<Record<string, ShiftAssignment>>(() => {
@@ -60,7 +76,6 @@ export default function App() {
   });
 
   // Modals state
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isLineModalOpen, setIsLineModalOpen] = useState(false);
   const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
 
@@ -119,13 +134,12 @@ export default function App() {
   const month = currentDate.getMonth();
   const schedule = generateMonthlySchedule(year, month, INITIAL_STAFF, overrides);
 
-  // Handle Shift Selection (Opens Edit Modal if Admin, or switches view)
+  // Handle Shift Selection (Opens Edit Modal if Edit Mode is unlocked)
   const handleSelectShift = (assignment: ShiftAssignment, staff: Staff) => {
     if (isAdmin) {
       setSelectedShiftForEdit({ assignment, staff });
     } else {
-      // In viewer mode, prompt to login if they try to edit
-      setIsAdminModalOpen(true);
+      handleLogoClick();
     }
   };
 
@@ -174,7 +188,7 @@ export default function App() {
         `📅 <b>วันที่:</b> ${dayName}ที่ ${dateNum} ${monthName} ${thaiYear}\n` +
         `⏰ <b>กะงานใหม่:</b> ${shiftDesc}\n` +
         `${updated.note ? `📝 <b>หมายเหตุ:</b> ${updated.note}\n` : ''}` +
-        `✍️ <b>ผู้ทำรายการ:</b> ${loggedInStaff ? loggedInStaff.name : 'ผู้ดูแลระบบ'}`;
+        `✍️ <b>ผู้ทำรายการ:</b> ระบบแก้ไขตารางงานออนไลน์`;
 
       sendTelegramNotification(msg);
     }
@@ -213,7 +227,7 @@ export default function App() {
         `<b>🔄 คืนค่าตารางงานเป็นอัตโนมัติ</b>\n\n` +
         `👤 <b>พนักงาน:</b> ${staff.name}\n` +
         `📅 <b>วันที่:</b> ${dateNum} ${monthName}\n` +
-        `✍️ <b>ผู้ทำรายการ:</b> ${loggedInStaff ? loggedInStaff.name : 'ผู้ดูแลระบบ'}`;
+        `✍️ <b>ผู้ทำรายการ:</b> ระบบแก้ไขตารางงานออนไลน์`;
 
       sendTelegramNotification(msg);
     }
@@ -233,7 +247,7 @@ export default function App() {
       const msg =
         `<b>⚠️ คืนค่าตารางงานหลักทั้งหมด</b>\n\n` +
         `รีเซ็ตการแก้ไขกะงานทั้งหมดกลับเป็นค่าเริ่มต้นระบบแล้ว\n` +
-        `✍️ <b>ผู้ทำรายการ:</b> ${loggedInStaff ? loggedInStaff.name : 'ผู้ดูแลระบบ'}`;
+        `✍️ <b>ผู้ทำรายการ:</b> ระบบแก้ไขตารางงานออนไลน์`;
 
       sendTelegramNotification(msg);
     }
@@ -248,13 +262,7 @@ export default function App() {
         viewMode={viewMode}
         setViewMode={setViewMode}
         isAdmin={isAdmin}
-        loggedInStaff={loggedInStaff}
-        onOpenAdminModal={() => setIsAdminModalOpen(true)}
-        onLogoutAdmin={() => {
-          setLoggedInStaff(null);
-          setIsAdmin(false);
-          localStorage.removeItem('bsm_logged_in_staff');
-        }}
+        onToggleEditMode={handleToggleEditMode}
         onOpenLineModal={() => setIsLineModalOpen(true)}
         onOpenTelegramModal={() => setIsTelegramModalOpen(true)}
         onResetSchedule={handleResetEntireSchedule}
@@ -263,6 +271,8 @@ export default function App() {
         setSelectedDept={setSelectedDept}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        logoClicks={logoClicks}
+        onLogoClick={handleLogoClick}
       />
 
       {/* Main Content Area */}
@@ -287,8 +297,6 @@ export default function App() {
               MSC (3 คน): คิม, โย, โจโฉ
             </span>
           </div>
-
-
         </div>
 
         {/* Calendar Main Views */}
@@ -340,7 +348,6 @@ export default function App() {
             schedule={schedule}
             isAdmin={isAdmin}
             onSelectShift={handleSelectShift}
-            loggedInStaff={loggedInStaff}
           />
         )}
       </main>
@@ -348,21 +355,11 @@ export default function App() {
       {/* Footer Disclaimer */}
       <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-4 text-center text-xs text-gray-500 dark:text-gray-400">
         <p>
-          ระบบจัดตารางงานพนักงาน BSM • PIA • MSC — ล็อกแก้ไขเฉพาะผู้ดูแลระบบ (Admin PIN Protected)
+          ระบบจัดตารางงานพนักงาน BSM • PIA • MSC — ตารางข้อมูลเชื่อมโยงตรงกันทุกคนแบบเรียลไทม์
         </p>
       </footer>
 
       {/* Modals & Drawers */}
-      <AdminLockModal
-        isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
-        onSuccessLogin={(staff) => {
-          setLoggedInStaff(staff);
-          setIsAdmin(staff.canEdit);
-          localStorage.setItem('bsm_logged_in_staff', JSON.stringify(staff));
-        }}
-      />
-
       <ShiftEditModal
         isOpen={!!selectedShiftForEdit}
         onClose={() => setSelectedShiftForEdit(null)}
