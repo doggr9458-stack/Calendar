@@ -73,12 +73,23 @@ export default function App() {
   // Fetch overrides from backend server for global synchronization
   const fetchRemoteSchedule = useCallback(async () => {
     try {
-      const res = await fetch('/api/schedule', { cache: 'no-store' });
+      const res = await fetch(`/api/schedule?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data && data.overrides) {
           setOverrides((prev) => {
-            if (JSON.stringify(prev) !== JSON.stringify(data.overrides)) {
+            const stableStringify = (obj: Record<string, any>) => {
+              if (!obj) return '{}';
+              const sorted: Record<string, any> = {};
+              Object.keys(obj).sort().forEach((k) => {
+                sorted[k] = obj[k];
+              });
+              return JSON.stringify(sorted);
+            };
+
+            const prevStr = stableStringify(prev);
+            const nextStr = stableStringify(data.overrides);
+            if (prevStr !== nextStr) {
               localStorage.setItem('bsm_schedule_overrides', JSON.stringify(data.overrides));
               return data.overrides;
             }
@@ -131,7 +142,7 @@ export default function App() {
       const res = await fetch('/api/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ updatedAssignment: updated }),
+        body: JSON.stringify({ overrides: nextOverrides, updatedAssignment: updated }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -179,7 +190,7 @@ export default function App() {
       const res = await fetch('/api/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resetAssignmentId: assignmentId }),
+        body: JSON.stringify({ overrides: copy, resetAssignmentId: assignmentId }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -221,7 +232,7 @@ export default function App() {
 
       const msg =
         `<b>⚠️ คืนค่าตารางงานหลักทั้งหมด</b>\n\n` +
-        `รีเซ็ตการปรับเปลี่ยนกะงานทั้งหมดกลับเป็นค่าเริ่มต้นระบบแล้ว\n` +
+        `รีเซ็ตการแก้ไขกะงานทั้งหมดกลับเป็นค่าเริ่มต้นระบบแล้ว\n` +
         `✍️ <b>ผู้ทำรายการ:</b> ${loggedInStaff ? loggedInStaff.name : 'ผู้ดูแลระบบ'}`;
 
       sendTelegramNotification(msg);

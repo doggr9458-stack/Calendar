@@ -101,7 +101,7 @@ export const AdminLockModal: React.FC<AdminLockModalProps> = ({
       [empId]: newPassword,
     }));
 
-    setSuccessMsg(`เปลี่ยนรหัสผ่านสำหรับ ${currentStaff.name} (ID: ${empId}) สำเร็จ! กำลังเข้าสู่ระบบ...`);
+    setSuccessMsg(`เปลี่ยนรหัสผ่านสำหรับ ${currentStaff.name} (ID: ${empId}) สำเร็จ! กำลังเข้าใช้งาน...`);
     setErrorMsg('');
 
     const canEdit = currentStaff.employeeId === '16286' || currentStaff.employeeId === '2609';
@@ -141,7 +141,7 @@ export const AdminLockModal: React.FC<AdminLockModalProps> = ({
                   ? 'หน้าเปลี่ยนรหัสเข้าใช้งาน (ครั้งแรก)'
                   : mode === 'set_password'
                   ? 'ตั้งค่า / เปลี่ยนรหัสผ่านส่วนตัว'
-                  : 'เข้าสู่ระบบด้วยรหัสพนักงาน'}
+                  : 'ยืนยันตัวตนด้วยรหัสพนักงาน'}
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {mode === 'first_time_change_password'
@@ -260,7 +260,7 @@ export const AdminLockModal: React.FC<AdminLockModalProps> = ({
                 className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5"
               >
                 <Unlock className="w-4 h-4" />
-                <span>เข้าสู่ระบบ</span>
+                <span>ยืนยันตัวตน</span>
               </button>
             </div>
 
@@ -289,7 +289,7 @@ export const AdminLockModal: React.FC<AdminLockModalProps> = ({
                   ยินดีต้อนรับการเข้าใช้งานครั้งแรก!
                 </p>
                 <p>
-                  เนื่องจากคุณใช้ ID พนักงาน (<strong className="font-mono">{currentStaff?.employeeId}</strong>) เข้าสู่ระบบเป็นครั้งแรก กรุณาเปลี่ยนรหัสผ่านใหม่เพื่อความปลอดภัยของบัญชี
+                  เนื่องจากคุณใช้ ID พนักงาน (<strong className="font-mono">{currentStaff?.employeeId}</strong>) ยืนยันตัวตนเป็นครั้งแรก กรุณาเปลี่ยนรหัสผ่านใหม่เพื่อความปลอดภัยของบัญชี
                 </p>
               </div>
             )}
@@ -339,7 +339,7 @@ export const AdminLockModal: React.FC<AdminLockModalProps> = ({
                 className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>บันทึกรหัสผ่านใหม่และเข้าสู่ระบบ</span>
+                <span>บันทึกรหัสผ่านใหม่และเข้าใช้งาน</span>
               </button>
             </div>
           </form>

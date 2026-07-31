@@ -182,7 +182,7 @@ export const StaffIndividualView: React.FC<StaffIndividualViewProps> = ({
         <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center justify-between">
           <span>ตารางงานเดือน {monthName} {thaiYear}</span>
           <span className="text-xs font-normal text-slate-500">
-            คลิกที่ช่องเพื่อปรับแก้กะ (เฉพาะผู้ดูแลระบบ)
+            คลิกที่ช่องเพื่อแก้ไขกะ (เฉพาะผู้ดูแลระบบ)
           </span>
         </h3>
 

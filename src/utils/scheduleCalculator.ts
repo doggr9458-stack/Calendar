@@ -394,12 +394,19 @@ export function generateMonthlySchedule(
   overrides: Record<string, ShiftAssignment> = {}
 ): Record<string, ShiftAssignment> {
   const schedule: Record<string, ShiftAssignment> = {};
-  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
 
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(year, monthIndex, day);
-    const dailyAssignments = generateDailyAssignmentsForDate(date, staffList, overrides);
-    Object.assign(schedule, dailyAssignments);
+  // Generate 3-month window (previous, current, next month) to ensure cross-month week views and month grid paddings have full data and overrides applied
+  for (let mOffset = -1; mOffset <= 1; mOffset++) {
+    const targetDate = new Date(year, monthIndex + mOffset, 1);
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth();
+    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(targetYear, targetMonth, day);
+      const dailyAssignments = generateDailyAssignmentsForDate(date, staffList, overrides);
+      Object.assign(schedule, dailyAssignments);
+    }
   }
 
   return schedule;

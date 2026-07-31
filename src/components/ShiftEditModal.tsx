@@ -85,7 +85,7 @@ export const ShiftEditModal: React.FC<ShiftEditModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <span>ปรับเปลี่ยนกะงาน: {staff.name}</span>
+                <span>แก้ไขกะงาน: {staff.name}</span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-normal">
                   {staff.role} ({staff.department})
                 </span>

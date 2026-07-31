@@ -45,13 +45,23 @@ async function startServer() {
   });
 
   // Schedule Overrides Persistence API for cross-user sync
+  app.options('/api/*', (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.sendStatus(200);
+  });
+
   app.get('/api/schedule', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    currentOverrides = loadOverrides();
     res.json({ overrides: currentOverrides });
   });
 
   app.post('/api/schedule', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     const { overrides, updatedAssignment, resetAssignmentId } = req.body;
     if (overrides !== undefined) {
       currentOverrides = overrides;
@@ -71,6 +81,7 @@ async function startServer() {
 
   app.post('/api/schedule/reset', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     currentOverrides = {};
     saveOverrides(currentOverrides);
     res.json({ success: true, overrides: {} });

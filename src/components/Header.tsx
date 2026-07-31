@@ -122,12 +122,12 @@ export const Header: React.FC<HeaderProps> = ({
         ) : (
           <>
             <Lock className="w-3 h-3" />
-            <span className="text-[11px]">โหมดผู้เยี่ยมชม — เข้าสู่ระบบด้วย ID พนักงานเพื่อแก้ไข</span>
+            <span className="text-[11px]">โหมดผู้เยี่ยมชม — ยืนยันตัวตนด้วย ID พนักงานเพื่อแก้ไข</span>
             <button
               onClick={onOpenAdminModal}
               className="underline hover:no-underline font-semibold bg-white/20 hover:bg-white/30 px-1.5 py-0.5 rounded text-white text-[10px]"
             >
-              เข้าสู่ระบบ (ID พนักงาน)
+              ยืนยันตัวตน (ID พนักงาน)
             </button>
           </>
         )}
@@ -223,8 +223,8 @@ export const Header: React.FC<HeaderProps> = ({
                   className="flex items-center gap-1 px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-2xs transition-all shrink-0"
                 >
                   <Lock className="w-3 h-3" />
-                  <span className="hidden sm:inline">เข้าสู่ระบบ (ID)</span>
-                  <span className="sm:hidden">เข้าสู่ระบบ</span>
+                  <span className="hidden sm:inline">ยืนยันตัวตน (ID)</span>
+                  <span className="sm:hidden">ยืนยันตัวตน</span>
                 </button>
               ) : (
                 <button
