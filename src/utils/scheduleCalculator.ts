@@ -180,8 +180,13 @@ export function generateDailyAssignmentsForDate(
   const dayOfWeek = date.getDay();
   const assignments: Record<string, ShiftAssignment> = {};
 
-  const anchorDate = new Date(2026, 0, 1);
-  const diffDays = Math.floor((date.getTime() - anchorDate.getTime()) / (1000 * 60 * 60 * 24));
+  // UTC-based day calculation to ensure 100% timezone-independent and consistent calculations on all devices
+  const utcDate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const utcAnchor = Date.UTC(2026, 0, 1);
+  const diffDays = Math.floor((utcDate - utcAnchor) / 86400000);
+
+  // Group rotation into 3-day blocks (3 days in a row per shift block)
+  const shiftBlock = Math.floor(diffDays / 3);
 
   // 1. BSM Team
   const bsmStaff = staffList.filter((s) => s.department === 'BSM');
@@ -202,9 +207,9 @@ export function generateDailyAssignmentsForDate(
   const yoWorking = yoStaff && yoStaff.fixedOffDay !== dayOfWeek;
   const isWaYoPaired = waWorking && yoWorking;
 
-  // Cycle Wa & Yo paired shift between MORNING and LATE (13:00 - 22:00)
+  // Cycle Wa & Yo paired shift between MORNING and LATE every 3 consecutive working days
   const waYoShiftCycle: ShiftType[] = ['MORNING', 'LATE'];
-  const waYoShiftType = isWaYoPaired ? waYoShiftCycle[Math.abs(diffDays) % 2] : null;
+  const waYoShiftType = isWaYoPaired ? waYoShiftCycle[Math.abs(shiftBlock) % 2] : null;
 
   // 2. PIA Team Assignment
   const piaStaff = staffList.filter((s) => s.department === 'PIA');
@@ -251,7 +256,7 @@ export function generateDailyAssignmentsForDate(
   }
 
   const piaRotationLen = Math.max(1, otherWorkingPia.length);
-  const startPiaIdx = ((diffDays % piaRotationLen) + piaRotationLen) % piaRotationLen;
+  const startPiaIdx = ((shiftBlock % piaRotationLen) + piaRotationLen) % piaRotationLen;
 
   otherWorkingPia.forEach((staff, i) => {
     const key = `${dateStr}-${staff.id}`;
@@ -326,7 +331,7 @@ export function generateDailyAssignmentsForDate(
   }
 
   const mscRotationLen = Math.max(1, otherWorkingMsc.length);
-  const startMscIdx = ((diffDays % mscRotationLen) + mscRotationLen) % mscRotationLen;
+  const startMscIdx = ((shiftBlock % mscRotationLen) + mscRotationLen) % mscRotationLen;
 
   otherWorkingMsc.forEach((staff, i) => {
     const key = `${dateStr}-${staff.id}`;
