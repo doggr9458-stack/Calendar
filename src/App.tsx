@@ -21,8 +21,30 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   // User Authentication State
-  const [loggedInStaff, setLoggedInStaff] = useState<Staff | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [loggedInStaff, setLoggedInStaff] = useState<Staff | null>(() => {
+    const saved = localStorage.getItem('bsm_logged_in_staff');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse logged in staff:', e);
+      }
+    }
+    return null;
+  });
+
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    const saved = localStorage.getItem('bsm_logged_in_staff');
+    if (saved) {
+      try {
+        const staff = JSON.parse(saved);
+        return staff.employeeId === '16286' || staff.employeeId === '2609';
+      } catch (e) {
+        console.error('Failed to parse admin status:', e);
+      }
+    }
+    return false;
+  });
 
   // Custom Overrides State
   const [overrides, setOverrides] = useState<Record<string, ShiftAssignment>>(() => {
@@ -51,12 +73,17 @@ export default function App() {
   // Fetch overrides from backend server for global synchronization
   const fetchRemoteSchedule = useCallback(async () => {
     try {
-      const res = await fetch('/api/schedule');
+      const res = await fetch('/api/schedule', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data && data.overrides) {
-          setOverrides(data.overrides);
-          localStorage.setItem('bsm_schedule_overrides', JSON.stringify(data.overrides));
+          setOverrides((prev) => {
+            if (JSON.stringify(prev) !== JSON.stringify(data.overrides)) {
+              localStorage.setItem('bsm_schedule_overrides', JSON.stringify(data.overrides));
+              return data.overrides;
+            }
+            return prev;
+          });
         }
       }
     } catch (err) {
@@ -215,6 +242,7 @@ export default function App() {
         onLogoutAdmin={() => {
           setLoggedInStaff(null);
           setIsAdmin(false);
+          localStorage.removeItem('bsm_logged_in_staff');
         }}
         onOpenLineModal={() => setIsLineModalOpen(true)}
         onOpenTelegramModal={() => setIsTelegramModalOpen(true)}
@@ -301,6 +329,7 @@ export default function App() {
             schedule={schedule}
             isAdmin={isAdmin}
             onSelectShift={handleSelectShift}
+            loggedInStaff={loggedInStaff}
           />
         )}
       </main>
@@ -319,6 +348,7 @@ export default function App() {
         onSuccessLogin={(staff) => {
           setLoggedInStaff(staff);
           setIsAdmin(staff.canEdit);
+          localStorage.setItem('bsm_logged_in_staff', JSON.stringify(staff));
         }}
       />
 

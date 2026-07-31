@@ -46,10 +46,12 @@ async function startServer() {
 
   // Schedule Overrides Persistence API for cross-user sync
   app.get('/api/schedule', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.json({ overrides: currentOverrides });
   });
 
   app.post('/api/schedule', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     const { overrides, updatedAssignment, resetAssignmentId } = req.body;
     if (overrides !== undefined) {
       currentOverrides = overrides;
@@ -68,6 +70,7 @@ async function startServer() {
   });
 
   app.post('/api/schedule/reset', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     currentOverrides = {};
     saveOverrides(currentOverrides);
     res.json({ success: true, overrides: {} });

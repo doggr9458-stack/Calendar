@@ -10,6 +10,7 @@ interface StaffIndividualViewProps {
   schedule: Record<string, ShiftAssignment>;
   isAdmin: boolean;
   onSelectShift: (assignment: ShiftAssignment, staff: Staff) => void;
+  loggedInStaff?: Staff | null;
 }
 
 export const StaffIndividualView: React.FC<StaffIndividualViewProps> = ({
@@ -18,8 +19,12 @@ export const StaffIndividualView: React.FC<StaffIndividualViewProps> = ({
   schedule,
   isAdmin,
   onSelectShift,
+  loggedInStaff,
 }) => {
-  const [selectedStaffId, setSelectedStaffId] = useState<string>(staffList[0]?.id || '');
+  const [selectedStaffId, setSelectedStaffId] = useState<string>(() => {
+    if (loggedInStaff) return loggedInStaff.id;
+    return staffList[0]?.id || '';
+  });
   const [copied, setCopied] = useState(false);
 
   const selectedStaff = staffList.find((s) => s.id === selectedStaffId) || staffList[0];
