@@ -64,7 +64,8 @@ export const AdminLockModal: React.FC<AdminLockModalProps> = ({
       // Valid custom password -> direct login
       setErrorMsg('');
       setPasswordInput('');
-      onSuccessLogin(currentStaff);
+      const canEdit = currentStaff.employeeId === '16286' || currentStaff.employeeId === '2609';
+      onSuccessLogin({ ...currentStaff, canEdit });
       onClose();
     } else if (isValidDefaultPass) {
       if (!hasCustomPassword) {
@@ -103,12 +104,14 @@ export const AdminLockModal: React.FC<AdminLockModalProps> = ({
     setSuccessMsg(`เปลี่ยนรหัสผ่านสำหรับ ${currentStaff.name} (ID: ${empId}) สำเร็จ! กำลังเข้าสู่ระบบ...`);
     setErrorMsg('');
 
+    const canEdit = currentStaff.employeeId === '16286' || currentStaff.employeeId === '2609';
+
     setTimeout(() => {
       setSuccessMsg('');
       setNewPassword('');
       setConfirmPassword('');
       setMode('login');
-      onSuccessLogin(currentStaff);
+      onSuccessLogin({ ...currentStaff, canEdit });
       onClose();
     }, 1200);
   };
@@ -199,13 +202,13 @@ export const AdminLockModal: React.FC<AdminLockModalProps> = ({
               {currentStaff ? (
                 <div className="mt-2 p-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${currentStaff.canEdit ? 'bg-amber-500' : 'bg-blue-500'}`}></span>
+                    <span className={`w-2 h-2 rounded-full ${(currentStaff.employeeId === '16286' || currentStaff.employeeId === '2609') ? 'bg-amber-500' : 'bg-blue-500'}`}></span>
                     <span className="font-bold text-gray-800 dark:text-gray-200">
                       {currentStaff.name} ({currentStaff.department})
                     </span>
                   </div>
-                  <span className="text-[11px] font-medium text-gray-500">
-                    {currentStaff.canEdit ? '⭐ สิทธิ์แก้ไข (Admin)' : 'ดูได้อย่างเดียว'}
+                  <span className={`text-[11px] font-bold ${(currentStaff.employeeId === '16286' || currentStaff.employeeId === '2609') ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500'}`}>
+                    {(currentStaff.employeeId === '16286' || currentStaff.employeeId === '2609') ? '⭐ สิทธิ์แก้ไข (Admin)' : '👁️ ดูได้อย่างเดียว'}
                   </span>
                 </div>
               ) : (
@@ -213,6 +216,9 @@ export const AdminLockModal: React.FC<AdminLockModalProps> = ({
                   ⚠️ ไม่พบพนักงานที่มีรหัสนี้ในระบบ
                 </div>
               )}
+              <div className="mt-2 text-[11px] text-slate-500 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                🔒 สิทธิ์แก้ไขตารางงานสงวนไว้เฉพาะ ID <strong className="font-mono text-amber-600">16286 (เก้า)</strong> และ <strong className="font-mono text-amber-600">2609 (แมงมุม)</strong> เท่านั้น
+              </div>
 
 
             </div>

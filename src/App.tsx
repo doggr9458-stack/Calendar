@@ -64,10 +64,10 @@ export default function App() {
     }
   }, []);
 
-  // Poll for remote schedule changes so all viewers see updates in real-time
+  // Poll for remote schedule changes every 2 seconds so all viewers see updates in real-time
   useEffect(() => {
     fetchRemoteSchedule();
-    const interval = setInterval(fetchRemoteSchedule, 3000);
+    const interval = setInterval(fetchRemoteSchedule, 2000);
     return () => clearInterval(interval);
   }, [fetchRemoteSchedule]);
 
@@ -101,11 +101,18 @@ export default function App() {
 
     // Save to shared server endpoint for cross-user synchronization
     try {
-      await fetch('/api/schedule', {
+      const res = await fetch('/api/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ updatedAssignment: updated }),
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.overrides) {
+          setOverrides(data.overrides);
+          localStorage.setItem('bsm_schedule_overrides', JSON.stringify(data.overrides));
+        }
+      }
     } catch (e) {
       console.error('Failed to post updated shift assignment:', e);
     }
@@ -142,11 +149,18 @@ export default function App() {
     localStorage.setItem('bsm_schedule_overrides', JSON.stringify(copy));
 
     try {
-      await fetch('/api/schedule', {
+      const res = await fetch('/api/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resetAssignmentId: assignmentId }),
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.overrides) {
+          setOverrides(data.overrides);
+          localStorage.setItem('bsm_schedule_overrides', JSON.stringify(data.overrides));
+        }
+      }
     } catch (e) {
       console.error('Failed to post reset shift assignment:', e);
     }
